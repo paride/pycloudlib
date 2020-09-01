@@ -353,18 +353,15 @@ class BaseInstance(ABC):
 
     def _wait_for_system(self):
         """Wait until system is fully booted and cloud-init has finished."""
-        # runlevel 'N 2' supports distros without recent cloud-init (trusty).
-        cloud_init_wait_or_runlevel_result = (
-            "cloud-init status --wait 2&>1 > /dev/null || "
-            "[[ $(runlevel) = 'N 2' ]] && [ -f /run/cloud-init/result.json ]"
-        )
+#        cmd = (
+#            "timeout {} cloud-init status --wait > /dev/null"
+#            .format(self.boot_timeout)
+#        )
         cmd = (
-            "i=0; while [ $i -lt {} ] && i=$(($i+1)); do {} && exit 0;"
-            " sleep 1; done; exit 1".format(
-                self.boot_timeout,
-                cloud_init_wait_or_runlevel_result
-            )
+            "timeout {} cloud-init status --wait --long"
+            .format(self.boot_timeout)
         )
+
         result = self.execute(cmd, description='waiting for start')
 
         if result.failed:
